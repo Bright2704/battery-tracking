@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Bright2704/battery-tracking/models"
+	"golang/battery-tracking/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -27,9 +27,9 @@ func (u *VisionServiceImpl) CreateVision(vision *models.Vision) error {
 	return err
 }
 
-func (u *VisionServiceImpl) GetVision(Related *string) (*models.Vision, error) {
+func (u *VisionServiceImpl) GetVision(Serial_number *string) (*models.Vision, error) {
 	var vision *models.Vision
-	query := bson.D{bson.E{Key: "related", Value: Related}}
+	query := bson.D{bson.E{Key: "serial_number", Value: Serial_number}}
 	err := u.visioncollection.FindOne(u.ctx, query).Decode(&vision)
 	return vision, err
 }
@@ -62,8 +62,8 @@ func (u *VisionServiceImpl) GetAll() ([]*models.Vision, error) {
 }
 
 func (u *VisionServiceImpl) UpdateVision(vision *models.Vision) error {
-	filter := bson.D{primitive.E{Key: "related", Value: vision.Related}}
-	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: "related", Value: vision.Related},
+	filter := bson.D{primitive.E{Key: "serial_number", Value: vision.Serial_number}}
+	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: "serial_number", Value: vision.Serial_number},
 																		primitive.E{Key: "stage_1", Value: vision.Stage_1}, 
 																		primitive.E{Key: "stage_2", Value: vision.Stage_2}, 
 																		primitive.E{Key: "stage_3", Value: vision.Stage_3}, 
@@ -76,8 +76,8 @@ func (u *VisionServiceImpl) UpdateVision(vision *models.Vision) error {
 	return nil
 }
 
-func (u *VisionServiceImpl) DeleteVision(Related *string) error {
-	filter := bson.D{primitive.E{Key: "related", Value: Related}}
+func (u *VisionServiceImpl) DeleteVision(Serial_number *string) error {
+	filter := bson.D{primitive.E{Key: "serial_number", Value: Serial_number}}
 	result, _  := u.visioncollection.DeleteOne(u.ctx, filter)
 	if result.DeletedCount != 1 {
 		return errors.New("Now visions found for delete")

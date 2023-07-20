@@ -1,4 +1,4 @@
-module github.com/Bright2704/battery-tracking
+module golang/battery-tracking
 
 go 1.20
 

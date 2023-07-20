@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Bright2704/battery-tracking/controller"
-	"github.com/Bright2704/battery-tracking/services"
+	"golang/battery-tracking/controller"
+	"golang/battery-tracking/services"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
