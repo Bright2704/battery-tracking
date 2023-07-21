@@ -27,12 +27,13 @@ func (u *VisionServiceImpl) CreateVision(vision *models.Vision) error {
 	return err
 }
 
-func (u *VisionServiceImpl) GetVision(Serial_number *string) (*models.Vision, error) {
-	var vision *models.Vision
-	query := bson.D{bson.E{Key: "serial_number", Value: Serial_number}}
-	err := u.visioncollection.FindOne(u.ctx, query).Decode(&vision)
-	return vision, err
+func (u *VisionServiceImpl) GetVision(serial_number *string) (*models.Vision, error) {
+    var vision *models.Vision
+    query := bson.D{bson.E{Key: "serial_number", Value: serial_number}}
+    err := u.visioncollection.FindOne(u.ctx, query).Decode(&vision)
+    return vision, err
 }
+
 
 func (u *VisionServiceImpl) GetAll() ([]*models.Vision, error) {
 	var visions []*models.Vision
