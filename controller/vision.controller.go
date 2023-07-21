@@ -42,6 +42,26 @@ func (uc *VisionController) GetVision(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, related)
 }
 
+func (uc *VisionController) GetVisionFromFile(ctx *gin.Context) {
+	// ใช้ ctx.DefaultQuery เพื่อรับค่าของ serial_number จาก URL
+	// ถ้าไม่มีค่าให้ใช้ค่าเริ่มต้นเป็นว่างๆ
+	visionSerialNumber := ctx.DefaultQuery("serial_number", "")
+
+	// ตรวจสอบว่า visionSerialNumber มีค่าหรือไม่
+	if visionSerialNumber == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Serial number is required"})
+		return
+	}
+
+	related, err := uc.VisionService.GetVision(&visionSerialNumber)
+	if err != nil {
+		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, related)
+}
+
 func (uc *VisionController) GetAll(ctx *gin.Context) {
 	visions, err := uc.VisionService.GetAll()
 	if err != nil {
@@ -79,6 +99,7 @@ func (uc *VisionController) RegisterVisionRoutes(rg *gin.RouterGroup) {
 	visionroute := rg.Group("/vision")
 	visionroute.POST("/create", uc.CreateVision)
 	visionroute.GET("/get/:serial_number", uc.GetVision)
+	visionroute.GET("/getfromfile", uc.GetVisionFromFile)
 	visionroute.GET("/getall", uc.GetAll)
 	visionroute.PUT("/update", uc.UpdateVision)
 	visionroute.DELETE("/delete/:serial_number", uc.DeleteVision)

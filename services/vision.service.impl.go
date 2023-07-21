@@ -2,9 +2,13 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"io/ioutil"
+	"os"
 
 	"golang/battery-tracking/models"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -34,6 +38,29 @@ func (u *VisionServiceImpl) GetVision(serial_number *string) (*models.Vision, er
     return vision, err
 }
 
+func (u *VisionServiceImpl) GetVisionFromFile(filePath string) (*models.Vision, error) {
+    // Open the file
+    file, err := os.Open(filePath)
+    if err != nil {
+        return nil, err
+    }
+    defer file.Close()
+
+    // Read the file content
+    fileData, err := ioutil.ReadAll(file)
+    if err != nil {
+        return nil, err
+    }
+
+    // Unmarshal the JSON data into a Vision struct
+    var vision *models.Vision
+    err = json.Unmarshal(fileData, &vision)
+    if err != nil {
+        return nil, err
+    }
+
+    return vision, nil
+}
 
 func (u *VisionServiceImpl) GetAll() ([]*models.Vision, error) {
 	var visions []*models.Vision

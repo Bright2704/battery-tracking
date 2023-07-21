@@ -8,4 +8,5 @@ type VisionService interface {
 	GetAll() ([]*models.Vision, error)
 	UpdateVision(*models.Vision) error
 	DeleteVision(*string) error
+	GetVisionFromFile(filePath string) (*models.Vision, error)
 }
