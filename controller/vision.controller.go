@@ -72,18 +72,46 @@ func (uc *VisionController) GetAll(ctx *gin.Context) {
 }
 
 func (uc *VisionController) UpdateVision(ctx *gin.Context) {
+	// Get the serial_number from URL
+	visionSerialNumber := ctx.DefaultQuery("serial_number", "")
+
+	// ตรวจสอบว่า visionSerialNumber มีค่าหรือไม่
+	if visionSerialNumber == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Serial number is required"})
+		return
+	}
+	
+
 	var vision models.Vision
-	if err := ctx. ShouldBindJSON(&vision); err != nil {
+	if err := ctx.ShouldBindJSON(&vision); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
-	err := uc.VisionService.UpdateVision(&vision)
+
+	// Update the vision using VisionService with the specified serial_number
+	
+	err := uc.VisionService.UpdateVision( &vision,&visionSerialNumber)
 	if err != nil {
 		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, gin.H{"message": "success"})
 }
+
+// func (uc *VisionController) UpdateVision(ctx *gin.Context) {
+// 	var vision models.Vision
+// 	if err := ctx. ShouldBindJSON(&vision); err != nil {
+// 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+// 		return
+// 	}
+// 	err := uc.VisionService.UpdateVision(&vision)
+// 	if err != nil {
+// 		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+// 		return
+// 	}
+// 	ctx.JSON(http.StatusOK, gin.H{"message": "success"})
+// }
 
 func (uc *VisionController) DeleteVision(ctx *gin.Context) {
 	var visionserial_number string = ctx.Param("serial_number")

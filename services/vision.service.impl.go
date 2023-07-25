@@ -89,7 +89,8 @@ func (u *VisionServiceImpl) GetAll() ([]*models.Vision, error) {
 	return visions, nil
 }
 
-func (u *VisionServiceImpl) UpdateVision(vision *models.Vision) error {
+func (u *VisionServiceImpl) UpdateVision(vision *models.Vision, visionSerialNumber *string) error {
+	
 	filter := bson.D{primitive.E{Key: "serial_number", Value: vision.Serial_number}}
 	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: "serial_number", Value: vision.Serial_number},
 																		primitive.E{Key: "stage_1", Value: vision.Stage_1}, 
@@ -97,7 +98,10 @@ func (u *VisionServiceImpl) UpdateVision(vision *models.Vision) error {
 																		primitive.E{Key: "stage_3", Value: vision.Stage_3}, 
 																		primitive.E{Key: "stage_4", Value: vision.Stage_4}, 
 																		primitive.E{Key: "stage_5", Value: vision.Stage_5}}}}
-	result, _ := u.visioncollection.UpdateOne(u.ctx, filter, update)
+	result, err:= u.visioncollection.UpdateOne(u.ctx, filter, update)
+	if err != nil {
+		return err
+	}
 	if result.MatchedCount != 1 {
 		return errors.New("No visions found for update")
 	}
