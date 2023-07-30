@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	
+
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -12,17 +15,18 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	
 )
 
 type VisionServiceImpl struct {
 	visioncollection *mongo.Collection
-	ctx  			 context.Context
+	ctx              context.Context
 }
 
 func NewVisionService(visioncollection *mongo.Collection, ctx context.Context) VisionService {
 	return &VisionServiceImpl{
 		visioncollection: visioncollection,
-		ctx: 			  ctx,
+		ctx:              ctx,
 	}
 }
 
@@ -32,34 +36,34 @@ func (u *VisionServiceImpl) CreateVision(vision *models.Vision) error {
 }
 
 func (u *VisionServiceImpl) GetVision(serial_number *string) (*models.Vision, error) {
-    var vision *models.Vision
-    query := bson.D{bson.E{Key: "serial_number", Value: serial_number}}
-    err := u.visioncollection.FindOne(u.ctx, query).Decode(&vision)
-    return vision, err
+	var vision *models.Vision
+	query := bson.D{bson.E{Key: "serial_number", Value: serial_number}}
+	err := u.visioncollection.FindOne(u.ctx, query).Decode(&vision)
+	return vision, err
 }
 
 func (u *VisionServiceImpl) GetVisionFromFile(filePath string) (*models.Vision, error) {
-    // Open the file
-    file, err := os.Open(filePath)
-    if err != nil {
-        return nil, err
-    }
-    defer file.Close()
+	// Open the file
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
 
-    // Read the file content
-    fileData, err := ioutil.ReadAll(file)
-    if err != nil {
-        return nil, err
-    }
+	// Read the file content
+	fileData, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
 
-    // Unmarshal the JSON data into a Vision struct
-    var vision *models.Vision
-    err = json.Unmarshal(fileData, &vision)
-    if err != nil {
-        return nil, err
-    }
+	// Unmarshal the JSON data into a Vision struct
+	var vision *models.Vision
+	err = json.Unmarshal(fileData, &vision)
+	if err != nil {
+		return nil, err
+	}
 
-    return vision, nil
+	return vision, nil
 }
 
 func (u *VisionServiceImpl) GetAll() ([]*models.Vision, error) {
@@ -90,15 +94,15 @@ func (u *VisionServiceImpl) GetAll() ([]*models.Vision, error) {
 }
 
 func (u *VisionServiceImpl) UpdateVision(vision *models.Vision, visionSerialNumber *string) error {
-	
+
 	filter := bson.D{primitive.E{Key: "serial_number", Value: vision.Serial_number}}
 	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: "serial_number", Value: vision.Serial_number},
-																		primitive.E{Key: "stage_1", Value: vision.Stage_1}, 
-																		primitive.E{Key: "stage_2", Value: vision.Stage_2}, 
-																		primitive.E{Key: "stage_3", Value: vision.Stage_3}, 
-																		primitive.E{Key: "stage_4", Value: vision.Stage_4}, 
-																		primitive.E{Key: "stage_5", Value: vision.Stage_5}}}}
-	result, err:= u.visioncollection.UpdateOne(u.ctx, filter, update)
+		primitive.E{Key: "stage_1", Value: vision.Stage_1},
+		primitive.E{Key: "stage_2", Value: vision.Stage_2},
+		primitive.E{Key: "stage_3", Value: vision.Stage_3},
+		primitive.E{Key: "stage_4", Value: vision.Stage_4},
+		primitive.E{Key: "stage_5", Value: vision.Stage_5}}}}
+	result, err := u.visioncollection.UpdateOne(u.ctx, filter, update)
 	if err != nil {
 		return err
 	}
@@ -108,9 +112,33 @@ func (u *VisionServiceImpl) UpdateVision(vision *models.Vision, visionSerialNumb
 	return nil
 }
 
+
+func (u *VisionServiceImpl) UpdateStageProcessFlags(visionSerialNumber *string, stageNumber int, processIn, processOut bool) error {
+	stageField := fmt.Sprintf("stage_%d", stageNumber)
+	update := bson.D{
+		primitive.E{Key: "$set", Value: bson.D{
+			primitive.E{Key: fmt.Sprintf("%s.process_in", stageField), Value: processIn},
+			primitive.E{Key: fmt.Sprintf("%s.process_out", stageField), Value: processOut},
+		}},
+	}
+
+	filter := bson.D{primitive.E{Key: "serial_number", Value: *visionSerialNumber}}
+
+	result, err := u.visioncollection.UpdateOne(u.ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount != 1 {
+		return errors.New("No visions found for update")
+	}
+
+	return nil
+}
+
 func (u *VisionServiceImpl) DeleteVision(Serial_number *string) error {
 	filter := bson.D{primitive.E{Key: "serial_number", Value: Serial_number}}
-	result, _  := u.visioncollection.DeleteOne(u.ctx, filter)
+	result, _ := u.visioncollection.DeleteOne(u.ctx, filter)
 	if result.DeletedCount != 1 {
 		return errors.New("Now visions found for delete")
 	}
