@@ -4,19 +4,26 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
-	"golang/battery-tracking/controller"
+	controllers "golang/battery-tracking/controller"
+	"golang/battery-tracking/database"
+	"golang/battery-tracking/routes"
 	"golang/battery-tracking/services"
+
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	
 )
 
 
 var (
 	server  	*gin.Engine
 	us 			services.VisionService
-	uc      	controller.VisionController
+	uc      	controllers.VisionController
+	
 	ctx     	context.Context
 	visionc 	*mongo.Collection
 	mongoclient *mongo.Client
@@ -30,6 +37,7 @@ func init() {
 		Password:   "123456789",
 	})
 	// Auto Migrate the struct
+	
 	
 	
 
@@ -49,7 +57,7 @@ func init() {
 
 	visionc = mongoclient.Database("battery").Collection("Battery-Tracking")
 	us    = services.NewVisionService(visionc, ctx)
-	uc    = controller.New(us)
+	uc    = controllers.New(us)
 	server= gin.Default()
 }
 
@@ -58,6 +66,48 @@ func main() {
 
 	basepath := server.Group("/v1")
 	uc.RegisterVisionRoutes(basepath)
+	
 
 	log.Fatal(server.Run(":8080"))
+
+
+	
+	err  := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	port := os.Getenv("PORT")
+
+	if port == "" {
+		port = "9000"
+	}
+	
+	
+	router := gin.New()
+	router.Use(gin.Logger())
+
+	client := database.DBinstance()
+	routes.AuthRoutes(router)
+	routes.UserRoutes(router)
+
+	router.GET("/api-1", func(c *gin.Context){
+		c.JSON(200, gin.H{"seccess":"Access granted for api-1"})
+	})
+
+	router.GET("/api-2", func(c *gin.Context){
+		c.JSON(200, gin.H{"success":"Access granted for api-2"})
+	})
+	// Close the MongoDB client when the application exits
+	defer func() {
+		err := client.Disconnect(context.Background())
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	router.Run(":" + "9000")
+}
+
+func DBinstance() {
+	panic("unimplemented")
 }

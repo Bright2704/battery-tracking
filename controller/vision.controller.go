@@ -1,14 +1,14 @@
-package controller
+package controllers
 
 import (
-	
 	"net/http"
 
+	
+	
 	"golang/battery-tracking/models"
 	"golang/battery-tracking/services"
 
 	"github.com/gin-gonic/gin"
-	
 )
 
 type VisionController struct {
@@ -104,35 +104,33 @@ func (uc *VisionController) UpdateVision(ctx *gin.Context) {
 }
 
 func (uc *VisionController) UpdateStageProcessFlags(ctx *gin.Context) {
-	// Get the serial_number from URL
-	visionSerialNumber := ctx.DefaultQuery("serial_number", "")
+		// Get the serial_number from URL
+		visionSerialNumber := ctx.DefaultQuery("serial_number", "")
 
-	// ตรวจสอบว่า visionSerialNumber มีค่าหรือไม่
-	if visionSerialNumber == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Serial number is required"})
-		return
+		// ตรวจสอบว่า visionSerialNumber มีค่าหรือไม่
+		if visionSerialNumber == "" {
+			ctx.JSON(http.StatusBadRequest, gin.H{"message": "Serial number is required"})
+			return
+		}
+		
+	
+		var vision models.Vision
+		if err := ctx.ShouldBindJSON(&vision); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+			return
+		}
+	
+		// Update the vision using VisionService with the specified serial_number
+		
+		err := uc.VisionService.UpdateVision( &vision,&visionSerialNumber)
+		if err != nil {
+			ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+			return
+		}
+	
+		ctx.JSON(http.StatusOK, gin.H{"message": "success"})
+	
 	}
-
-	// Get the stageNumber, processIn, and processOut from the JSON payload
-	var stageData struct {
-		StageNumber int  `json:"stage_number"`
-		ProcessIn   bool `json:"process_in"`
-		ProcessOut  bool `json:"process_out"`
-	}
-	if err := ctx.ShouldBindJSON(&stageData); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
-		return
-	}
-
-	// Update the stage process flags using VisionService with the specified serial_number and stageNumber
-	err := uc.VisionService.UpdateStageProcessFlags(&visionSerialNumber, stageData.StageNumber, stageData.ProcessIn, stageData.ProcessOut )
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"message": "success"})
-}
 
 
 
@@ -155,4 +153,8 @@ func (uc *VisionController) RegisterVisionRoutes(rg *gin.RouterGroup) {
 	visionroute.PATCH("/update", uc.UpdateVision)
 	visionroute.PATCH("/updatestageprocess", uc.UpdateStageProcessFlags)
 	visionroute.DELETE("/delete/:serial_number", uc.DeleteVision)
+
+
+	
 }
+

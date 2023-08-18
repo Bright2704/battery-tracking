@@ -6,7 +6,7 @@ import (
 	"errors"
 	
 
-	"fmt"
+	
 	"io/ioutil"
 	"os"
 
@@ -29,6 +29,7 @@ func NewVisionService(visioncollection *mongo.Collection, ctx context.Context) V
 		ctx:              ctx,
 	}
 }
+
 
 func (u *VisionServiceImpl) CreateVision(vision *models.Vision) error {
 	_, err := u.visioncollection.InsertOne(u.ctx, vision)
@@ -113,28 +114,36 @@ func (u *VisionServiceImpl) UpdateVision(vision *models.Vision, visionSerialNumb
 }
 
 
-func (u *VisionServiceImpl) UpdateStageProcessFlags(visionSerialNumber *string, stageNumber int, processIn, processOut bool) error {
-	stageField := fmt.Sprintf("stage_%d", stageNumber)
-	update := bson.D{
-		primitive.E{Key: "$set", Value: bson.D{
-			primitive.E{Key: fmt.Sprintf("%s.process_in", stageField), Value: processIn},
-			primitive.E{Key: fmt.Sprintf("%s.process_out", stageField), Value: processOut},
-		}},
-	}
-
+func (u *VisionServiceImpl) UpdateStageProcessFlags(vision *models.Vision, visionSerialNumber *string) error {
+	// หาเอกสารที่ตรงกับเงื่อนไข
 	filter := bson.D{primitive.E{Key: "serial_number", Value: *visionSerialNumber}}
-
-	result, err := u.visioncollection.UpdateOne(u.ctx, filter, update)
+	var existingVision models.Vision
+	err := u.visioncollection.FindOne(u.ctx, filter).Decode(&existingVision)
 	if err != nil {
 		return err
 	}
 
-	if result.MatchedCount != 1 {
-		return errors.New("No visions found for update")
+	// อัปเดตข้อมูลในเอกสารที่ตรงกับเงื่อนไข
+	existingVision.Stage_1.Process_in = vision.Stage_1.Process_in
+	existingVision.Stage_1.Process_out = vision.Stage_1.Process_out
+	existingVision.Stage_2.Process_in = vision.Stage_2.Process_in
+	existingVision.Stage_2.Process_out = vision.Stage_2.Process_out
+	existingVision.Stage_3.Process_in = vision.Stage_3.Process_in
+	existingVision.Stage_3.Process_out = vision.Stage_3.Process_out
+	existingVision.Stage_4.Process_in = vision.Stage_4.Process_in
+	existingVision.Stage_4.Process_out = vision.Stage_4.Process_out
+	existingVision.Stage_5.Process_in = vision.Stage_5.Process_in
+	existingVision.Stage_5.Process_out = vision.Stage_5.Process_out
+
+	// อัปเดตข้อมูลใน MongoDB
+	_, err = u.visioncollection.ReplaceOne(u.ctx, filter, existingVision)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
+
 
 func (u *VisionServiceImpl) DeleteVision(Serial_number *string) error {
 	filter := bson.D{primitive.E{Key: "serial_number", Value: Serial_number}}
