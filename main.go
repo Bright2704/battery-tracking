@@ -62,33 +62,82 @@ func init() {
 }
 
 func main() {
-	defer mongoclient.Disconnect(ctx)
+
+
+	
+
+    // Get port for the first server (default to 9000 if not set)
+    port1 := os.Getenv("PORT1")
+    if port1 == "" {
+        port1 = "9000"
+    }
+	err := godotenv.Load(".env")
+    if err != nil {
+        log.Fatal("Error loading .env file")
+    }
+		defer mongoclient.Disconnect(ctx)
 
 	basepath := server.Group("/v1")
 	uc.RegisterVisionRoutes(basepath)
 	
 
-	log.Fatal(server.Run(":8080"))
+	 // Get port for the second server (default to 8080 if not set)
+	 port2 := os.Getenv("PORT2")
+	 if port2 == "" {
+		 port2 = "8080"
+		 
+	 }
+	 router := gin.New()
+	 router.Use(gin.Logger())
+ 
+	 client := database.DBinstance()
+	 // collection := OpenCollection(client, os.Getenv("COLLECTION_NAME"))
+ 
+	 routes.AuthRoutes(router)
+	 routes.UserRoutes(router)
+ 
+
+    // Start the first server on a new goroutine
+    go func() {
+        err := server.Run(":" + port1)
+        if err != nil {
+            log.Fatalf("Failed to run server on port %s: %v", port1, err)
+        }
+    }()
 
 
+    // Start the second server on the main goroutine
+    err = router.Run(":" + port2)
+    if err != nil {
+        log.Fatalf("Failed to run server on port %s: %v", port2, err)
+    }
+
+
+
+	//////////////////////////////////////////////////
+	// err  := godotenv.Load(".env")
+	// if err != nil {
+	// 	log.Fatal("Error loading .env file")
+	// }
+	// port := os.Getenv("PORT")
+
+	// if port == "" {
+	// 	port = "8080"
+	// }
+
+	// defer mongoclient.Disconnect(ctx)
+
+	// basepath := server.Group("/v1")
+	// uc.RegisterVisionRoutes(basepath)
 	
-	err  := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	port := os.Getenv("PORT")
-
-	if port == "" {
-		port = "9000"
-	}
+	// // server.Run(":8080")
+	// port = os.Getenv("PORT")
+	// if port == "" {
+	// 	port = "8080"
+	// }
 	
 	
-	router := gin.New()
-	router.Use(gin.Logger())
-
-	client := database.DBinstance()
-	routes.AuthRoutes(router)
-	routes.UserRoutes(router)
+	
 
 	router.GET("/api-1", func(c *gin.Context){
 		c.JSON(200, gin.H{"seccess":"Access granted for api-1"})
@@ -105,7 +154,10 @@ func main() {
 		}
 	}()
 
-	router.Run(":" + "9000")
+	
+	
+
+	// router.Run(":" + "port")
 }
 
 func DBinstance() {
