@@ -7,7 +7,7 @@ import (
 	"os"
 
 	controllers "golang/battery-tracking/controller"
-	"golang/battery-tracking/database"
+	// "golang/battery-tracking/database"
 	"golang/battery-tracking/routes"
 	"golang/battery-tracking/services"
 
@@ -39,7 +39,6 @@ func init() {
 	// Auto Migrate the struct
 	
 	
-	
 
 	// Connect to MongoDB server.
 	mongoclient, err = mongo.Connect(context.Background(), clientOptions)
@@ -63,58 +62,58 @@ func init() {
 
 func main() {
 
+// Load .env file
+err := godotenv.Load(".env")
+if err != nil {
+	log.Fatal("Error loading .env file")
+}
 
-	
+// Create a new Gin engine
+router := gin.New()
+router.Use(gin.Logger())
 
-    // Get port for the first server (default to 9000 if not set)
-    port1 := os.Getenv("PORT1")
-    if port1 == "" {
-        port1 = "9000"
-    }
-	err := godotenv.Load(".env")
-    if err != nil {
-        log.Fatal("Error loading .env file")
-    }
-		defer mongoclient.Disconnect(ctx)
+// Register Vision routes on the chosen engine
+basepath := router.Group("/v1")
+uc.RegisterVisionRoutes(basepath)
 
-	basepath := server.Group("/v1")
-	uc.RegisterVisionRoutes(basepath)
-	
+// Register Auth and User routes on the same engine
+routes.AuthRoutes(router)
+routes.UserRoutes(router)
 
-	 // Get port for the second server (default to 8080 if not set)
-	 port2 := os.Getenv("PORT2")
-	 if port2 == "" {
-		 port2 = "8080"
-		 
-	 }
-	 router := gin.New()
-	 router.Use(gin.Logger())
- 
-	 client := database.DBinstance()
-	 // collection := OpenCollection(client, os.Getenv("COLLECTION_NAME"))
- 
-	 routes.AuthRoutes(router)
-	 routes.UserRoutes(router)
- 
+// Additional routes if needed
+router.GET("/api-1", func(c *gin.Context){
+	c.JSON(200, gin.H{"seccess":"Access granted for api-1"})
+})
 
-    // Start the first server on a new goroutine
-    go func() {
-        err := server.Run(":" + port1)
-        if err != nil {
-            log.Fatalf("Failed to run server on port %s: %v", port1, err)
-        }
-    }()
+router.GET("/api-2", func(c *gin.Context){
+	c.JSON(200, gin.H{"success":"Access granted for api-2"})
+})
 
+// Get port from .env (default to 8080 if not set)
+port := os.Getenv("PORT")
+if port == "" {
+	port = "9000"
+}
 
-    // Start the second server on the main goroutine
-    err = router.Run(":" + port2)
-    if err != nil {
-        log.Fatalf("Failed to run server on port %s: %v", port2, err)
-    }
+// Run the consolidated server on the desired port
+err = router.Run(":" + port)
+if err != nil {
+	log.Fatalf("Failed to run server on port %s: %v", port, err)
+}
 
+// Clean up resources when done
+defer func() {
+	err := mongoclient.Disconnect(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+}()
+}
 
-
-	//////////////////////////////////////////////////
+func DBinstance() {
+	panic("unimplemented")
+}
+//////////////////////////////////////////////////
 	// err  := godotenv.Load(".env")
 	// if err != nil {
 	// 	log.Fatal("Error loading .env file")
@@ -135,31 +134,3 @@ func main() {
 	// if port == "" {
 	// 	port = "8080"
 	// }
-	
-	
-	
-
-	router.GET("/api-1", func(c *gin.Context){
-		c.JSON(200, gin.H{"seccess":"Access granted for api-1"})
-	})
-
-	router.GET("/api-2", func(c *gin.Context){
-		c.JSON(200, gin.H{"success":"Access granted for api-2"})
-	})
-	// Close the MongoDB client when the application exits
-	defer func() {
-		err := client.Disconnect(context.Background())
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
-
-	
-	
-
-	// router.Run(":" + "port")
-}
-
-func DBinstance() {
-	panic("unimplemented")
-}
