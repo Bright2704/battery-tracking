@@ -1,6 +1,6 @@
 
 
-FROM golang:1.20
+FROM --platform=linux/amd64 golang:1.20
 
 WORKDIR /app
 

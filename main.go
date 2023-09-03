@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	
 	"os"
 
 	controllers "golang/battery-tracking/controller"
-	// "golang/battery-tracking/database"
+	
 	"golang/battery-tracking/routes"
 	"golang/battery-tracking/services"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	
 )
 
 
@@ -36,10 +36,7 @@ func init() {
 		Username:   "dev",
 		Password:   "123456789",
 	})
-	// Auto Migrate the struct
 	
-	
-
 	// Connect to MongoDB server.
 	mongoclient, err = mongo.Connect(context.Background(), clientOptions)
 	if err != nil {
@@ -108,29 +105,9 @@ defer func() {
 		log.Fatal(err)
 	}
 }()
+
 }
 
 func DBinstance() {
 	panic("unimplemented")
 }
-//////////////////////////////////////////////////
-	// err  := godotenv.Load(".env")
-	// if err != nil {
-	// 	log.Fatal("Error loading .env file")
-	// }
-	// port := os.Getenv("PORT")
-
-	// if port == "" {
-	// 	port = "8080"
-	// }
-
-	// defer mongoclient.Disconnect(ctx)
-
-	// basepath := server.Group("/v1")
-	// uc.RegisterVisionRoutes(basepath)
-	
-	// // server.Run(":8080")
-	// port = os.Getenv("PORT")
-	// if port == "" {
-	// 	port = "8080"
-	// }
